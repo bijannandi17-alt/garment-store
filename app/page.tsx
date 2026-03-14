@@ -1,5 +1,6 @@
-import Link from "next/link"
 import { products } from "../data/products"
+import ProductCard from "../components/ProductCard"
+import Link from "next/link"
 
 export default function Home() {
 
@@ -7,50 +8,57 @@ export default function Home() {
 
     <div>
 
-      {/* HERO BANNER */}
+      {/* HERO SECTION */}
 
-      <div className="bg-pink-100 h-[400px] flex items-center justify-center text-center">
+      <div className="bg-gradient-to-r from-pink-200 to-pink-400 h-[420px] flex items-center justify-center text-center">
+
         <div>
-          <h1 className="text-5xl font-bold text-pink-700">
+
+          <h1 className="text-5xl font-bold text-pink-800">
             Amropali Fashon
           </h1>
 
-          <p className="mt-4 text-xl">
+          <p className="text-xl mt-4">
             Beautiful Cotton Nighties for Everyday Comfort
           </p>
 
           <Link href="/products">
-            <button className="mt-6 bg-pink-600 text-white px-6 py-3 rounded">
+
+            <button className="mt-6 bg-pink-600 text-white px-8 py-3 rounded-lg text-lg hover:bg-pink-700">
               Shop Now
             </button>
+
           </Link>
+
         </div>
+
       </div>
+
 
 
       {/* CATEGORY SECTION */}
 
       <div className="p-10">
 
-        <h2 className="text-3xl font-bold mb-6">
+        <h2 className="text-3xl font-bold mb-8">
           Shop by Category
         </h2>
 
         <div className="grid grid-cols-4 gap-6">
 
-          <div className="bg-white shadow p-6 text-center rounded">
+          <div className="bg-white shadow p-6 rounded text-center hover:shadow-lg cursor-pointer">
             Cotton Nighties
           </div>
 
-          <div className="bg-white shadow p-6 text-center rounded">
+          <div className="bg-white shadow p-6 rounded text-center hover:shadow-lg cursor-pointer">
             Printed Nighties
           </div>
 
-          <div className="bg-white shadow p-6 text-center rounded">
+          <div className="bg-white shadow p-6 rounded text-center hover:shadow-lg cursor-pointer">
             Daily Wear
           </div>
 
-          <div className="bg-white shadow p-6 text-center rounded">
+          <div className="bg-white shadow p-6 rounded text-center hover:shadow-lg cursor-pointer">
             Premium Nighties
           </div>
 
@@ -59,11 +67,12 @@ export default function Home() {
       </div>
 
 
+
       {/* TRENDING PRODUCTS */}
 
       <div className="p-10">
 
-        <h2 className="text-3xl font-bold mb-6">
+        <h2 className="text-3xl font-bold mb-8">
           Trending Nighties
         </h2>
 
@@ -71,32 +80,20 @@ export default function Home() {
 
           {products.map((product) => (
 
-            <Link key={product.id} href={`/product/${product.id}`}>
-
-              <div className="bg-white shadow rounded p-4 hover:shadow-xl transition">
-
-                <img
-                  src={product.image}
-                  className="rounded-lg"
-                />
-
-                <h3 className="mt-2 font-semibold">
-                  {product.name}
-                </h3>
-
-                <p className="text-pink-600 font-bold">
-                  ₹{product.price}
-                </p>
-
-              </div>
-
-            </Link>
+            <ProductCard
+              key={product.id}
+              id={product.id}
+              name={product.name}
+              price={product.price}
+              image={product.image}
+            />
 
           ))}
 
         </div>
 
       </div>
+
 
 
       {/* OFFER BANNER */}
@@ -113,8 +110,8 @@ export default function Home() {
 
       </div>
 
+
     </div>
 
   )
-
 }

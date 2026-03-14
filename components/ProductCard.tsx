@@ -1,34 +1,51 @@
+"use client"
+
 import Link from "next/link"
 
-type Props={
-id:number
-name:string
-price:number
-image:string
+type Props = {
+  id: number
+  name: string
+  price: number
+  image: string
 }
 
-export default function ProductCard({id,name,price,image}:Props){
+export default function ProductCard({ id, name, price, image }: Props) {
 
-return(
+  return (
 
-<Link href={`/product/${id}`}>
+    <Link href={`/product/${id}`}>
 
-<div className="border rounded-xl shadow p-4 cursor-pointer">
+      <div className="border rounded-xl shadow p-4 cursor-pointer hover:shadow-xl transition relative">
 
-<img src={image} className="rounded"/>
+        {/* Wishlist Icon */}
+        <button className="absolute right-3 top-3 text-red-500 text-xl">
+          ♡
+        </button>
 
-<h2 className="text-lg mt-2">
-{name}
-</h2>
+        {/* Product Image */}
+        <img
+          src={image}
+          className="rounded-lg w-full"
+        />
 
-<p className="text-pink-600 font-bold">
-₹{price}
-</p>
+        {/* Product Name */}
+        <h2 className="text-lg mt-2 font-semibold">
+          {name}
+        </h2>
 
-</div>
+        {/* Rating */}
+        <p className="text-yellow-500 text-sm">
+          ★★★★☆
+        </p>
 
-</Link>
+        {/* Price */}
+        <p className="text-pink-600 font-bold text-lg">
+          ₹{price}
+        </p>
 
-)
+      </div>
 
+    </Link>
+
+  )
 }
