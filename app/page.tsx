@@ -1,12 +1,14 @@
 import { products } from "../data/products"
 import ProductCard from "../components/ProductCard"
 import Link from "next/link"
+import HeroBanner from "../components/HeroBanner"
 
 export default function Home() {
 
   return (
 
     <div>
+     <HeroBanner/>
 
       {/* HERO SECTION */}
 
