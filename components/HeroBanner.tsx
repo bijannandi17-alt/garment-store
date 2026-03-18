@@ -1,11 +1,12 @@
 "use client"
 
+import Image from "next/image"
 import { useState, useEffect } from "react"
 
-export default function HeroBanner(){
+export default function HeroBanner() {
 
-const banners=[
-"/images/banner1.jpg",
+  const banners = [
+    "/images/banner1.jpg",
 "/images/banner2.jpg",
 "/images/banner3.jpg",
 "/images/banner4.jpg",
@@ -13,41 +14,49 @@ const banners=[
 "/images/banner6.jpg",
 "/images/banner7.jpg",
 "/images/banner8.jpg",
-"/images/banner9.jpg",
+"/images/banner9.jpg"
+  ]
 
-]
+  const [index, setIndex] = useState(0)
 
-const [index,setIndex]=useState(0)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIndex((prev) => (prev + 1) % banners.length)
+    }, 3000)
 
-useEffect(()=>{
+    return () => clearInterval(interval)
+  }, [])
 
-const interval=setInterval(()=>{
-setIndex((prev)=>(prev+1)%banners.length)
-},3000)
+  return (
 
-return()=>clearInterval(interval)
+    <div className="w-full h-[60vh] md:h-[80vh] relative">
 
-},[])
+      {/* Banner Image */}
+      
 
-return(
+      <Image
+  src={banners[index]}
+  alt="banner"
+  fill
+  priority
+  className="object-cover"
+/>      
 
-<div className="w-full h-[420px] overflow-hidden relative">
 
-<img
-src={banners[index]}
-className="w-full h-full object-cover"
-/>
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-center px-4">
 
-<div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+        <h1 className="text-white text-3xl md:text-6xl font-bold">
+          AstylO
+        </h1>
 
-<h1 className="text-white text-5xl font-bold">
-Astylo
-</h1>
+        <p className="text-white mt-4 text-lg md:text-xl">
+          Stylish & Comfortable Nighties
+        </p>
 
-</div>
+      </div>
 
-</div>
+    </div>
 
-)
-
+  )
 }
