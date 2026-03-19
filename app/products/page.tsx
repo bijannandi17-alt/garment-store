@@ -3,50 +3,96 @@
 import { useState } from "react"
 import { products } from "../../data/products"
 import ProductCard from "../../components/ProductCard"
-import SearchBar from "../../components/SearchBar"
 
-export default function ProductsPage(){
+export default function ProductsPage() {
 
-const [filtered,setFiltered]=useState(products)
+  const [maxPrice, setMaxPrice] = useState(2000)
+  const [sort, setSort] = useState("")
+  const [search, setSearch] = useState("")
 
-function handleSearch(query:string){
+  // FILTER LOGIC
+  let filteredProducts = products.filter(p =>
+    p.price <= maxPrice &&
+    p.name.toLowerCase().includes(search.toLowerCase())
+  )
 
-const result=products.filter(p =>
-p.name.toLowerCase().includes(query.toLowerCase())
-)
+  // SORT LOGIC
+  if (sort === "low") {
+    filteredProducts = [...filteredProducts].sort((a, b) => a.price - b.price)
+  }
 
-setFiltered(result)
+  if (sort === "high") {
+    filteredProducts = [...filteredProducts].sort((a, b) => b.price - a.price)
+  }
 
-}
+  return (
 
-return(
+    <div className="grid grid-cols-4 gap-6 p-6">
 
-<div className="p-10">
+      {/* LEFT SIDE FILTERS */}
+      <div className="border p-4 rounded-lg">
 
-<h1 className="text-3xl font-bold mb-6">
-Nighty Collection
-</h1>
+        <h2 className="font-bold text-lg mb-4">Filters</h2>
 
-<SearchBar onSearch={handleSearch}/>
+        {/* SEARCH */}
+        <input
+          type="text"
+          placeholder="Search product..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="border p-2 w-full mb-4 rounded"
+        />
 
-<div className="grid grid-cols-4 gap-6">
+        {/* PRICE FILTER */}
+        <label className="block mb-2">
+          Max Price: ₹{maxPrice}
+        </label>
 
-{filtered.map(p=>(
+        <input
+          type="range"
+          min="0"
+          max="2000"
+          value={maxPrice}
+          onChange={(e) => setMaxPrice(Number(e.target.value))}
+          className="w-full"
+        />
 
-<ProductCard
-key={p.id}
-id={p.id}
-name={p.name}
-price={p.price}
-image={p.image}
-/>
+        {/* SORT */}
+        <h2 className="font-bold mt-6">Sort By</h2>
 
-))}
+        <select
+          value={sort}
+          onChange={(e) => setSort(e.target.value)}
+          className="border p-2 w-full mt-2 rounded"
+        >
+          <option value="">Default</option>
+          <option value="low">Price Low → High</option>
+          <option value="high">Price High → Low</option>
+        </select>
 
-</div>
+      </div>
 
-</div>
+      {/* RIGHT SIDE PRODUCTS */}
+      <div className="col-span-3 grid grid-cols-1 md:grid-cols-3 gap-6">
 
-)
+        {filteredProducts.length > 0 ? (
+          filteredProducts.map(product => (
+            <ProductCard
+              key={product.id}
+              id={product.id}
+              name={product.name}
+              price={product.price}
+              oldPrice={product.oldPrice}
+              image={product.image}
+              hoverImage={product.hoverImage}
+            />
+          ))
+        ) : (
+          <p>No products found</p>
+        )}
 
+      </div>
+
+    </div>
+  )
 }
