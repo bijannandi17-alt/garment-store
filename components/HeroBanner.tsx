@@ -6,7 +6,7 @@ import { useState, useEffect } from "react"
 export default function HeroBanner() {
 
   const banners = [
-    "/images/banner1.jpg",
+    "/images/banner1_new.jpg",
 "/images/banner2.jpg",
 "/images/banner3.jpg",
 "/images/banner4.jpg",
