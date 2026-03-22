@@ -6,7 +6,9 @@ export type Product = {
   id: number
   name: string
   price: number
-  image: string
+  oldPrice?: number
+  image: string[]     // ✅ FIXED
+  hoverImage: string
 }
 
 type CartContextType = {

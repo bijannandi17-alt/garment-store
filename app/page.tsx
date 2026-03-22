@@ -88,7 +88,7 @@ export default function Home() {
   name={product.name}
   price={product.price}
   oldPrice={product.oldPrice}
-  image={product.image}
+  image={product.image[0]}
   hoverImage={product.hoverImage}
 />
 
