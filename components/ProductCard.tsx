@@ -56,9 +56,10 @@ export default function ProductCard({
       {/* Image */}
       <Link href={`/product/${id}`}>
         <img
-          src={hover && hoverImage ? hoverImage : image}
-          className="rounded-lg w-full"
-        />
+  src={hover && hoverImage ? hoverImage : image}
+  alt={name}
+  className="rounded-lg w-full"
+/>
       </Link>
 
       {/* Name */}
@@ -87,7 +88,13 @@ export default function ProductCard({
       {/* Quick Add Button */}
       <button
         onClick={() =>
-          addToCart({ id, name, price, image })
+          addToCart({
+  id,
+  name,
+  price,
+  image: [image],   // ✅ FIX HERE
+  hoverImage: hoverImage || image
+})
         }
         className="w-full mt-3 bg-pink-600 text-white py-2 rounded hover:bg-pink-700"
       >

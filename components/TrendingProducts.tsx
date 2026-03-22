@@ -18,11 +18,12 @@ Trending Nighty
 {trending.map(p => (
 
 <ProductCard
-key={p.id}
-id={p.id}
-name={p.name}
-price={p.price}
-image={p.image}
+  id={p.id}
+  name={p.name}
+  price={p.price}
+  oldPrice={p.oldPrice}
+  image={p.image[0]}     // ✅ FIX
+  hoverImage={p.hoverImage}
 />
 
 ))}
