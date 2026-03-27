@@ -48,6 +48,8 @@ export default function Navbar() {
 
         </Link>
 
+        <Link href="/orders">Orders</Link>
+
       </div>
 
     </nav>
