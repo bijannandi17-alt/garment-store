@@ -1,6 +1,7 @@
 "use client"
-import Link from "next/link"
+
 import { useContext } from "react"
+import Link from "next/link"
 import { CartContext } from "../../lib/cartContext"
 
 export default function CartPage() {
@@ -27,116 +28,216 @@ export default function CartPage() {
     0
   )
 
+  // 🟢 SAVINGS
+  const savedAmount =
+    cart.reduce(
+      (sum, item) =>
+        sum +
+        (
+          (item.product.oldPrice || 0)
+          - item.product.price
+        ) *
+        item.quantity,
+      0
+    )
+
+  // 🟢 DELIVERY
+  const deliveryCharge =
+    total >= 999 ? 0 : 60
+
+  const finalTotal =
+    total + deliveryCharge
+
   return (
 
-    <div className="p-10 max-w-4xl mx-auto">
+    <div className="p-6 max-w-5xl mx-auto">
 
       <h1 className="text-3xl font-bold mb-6">
-        Your Cart
+        Your Cart 🛒
       </h1>
 
       {cart.length === 0 && (
         <p>Your cart is empty</p>
       )}
 
+      {/* 🟢 DELIVERY INFO */}
+
+      {cart.length > 0 && (
+
+        <div className="border p-4 rounded mb-6 bg-gray-50">
+
+          <p className="font-bold">
+            🚚 Delivery Info
+          </p>
+
+          <p className="text-sm text-gray-600">
+            Free delivery above ₹999
+          </p>
+
+        </div>
+
+      )}
+
+      {/* 🟢 CART ITEMS */}
+
       {cart.map(item => (
 
         <div
           key={item.product.id}
-          className="flex items-center gap-6 border-b py-4"
+          className="flex gap-6 border-b py-5"
         >
 
-          {/* Image */}
+          {/* IMAGE */}
 
           <img
             src={item.product.image[0]}
-            className="w-20 h-20 rounded"
+            className="w-24 h-24 rounded object-cover"
           />
 
-          {/* Info */}
+          {/* INFO */}
 
           <div className="flex-1">
 
-            <h2 className="font-bold">
+            <h2 className="font-bold text-lg">
               {item.product.name}
             </h2>
 
-            <p>
+            {/* SIZE */}
+
+            <p className="text-sm text-gray-500">
+              Size: Free Size
+            </p>
+
+            {/* PRICE */}
+
+            <p className="text-pink-600 font-bold mt-1">
               ₹{item.product.price}
             </p>
 
-          </div>
+            {item.product.oldPrice && (
 
-          {/* Quantity */}
+              <p className="text-sm line-through text-gray-400">
+                ₹{item.product.oldPrice}
+              </p>
 
-          <div className="flex items-center gap-2">
+            )}
+
+            {/* QUANTITY */}
+
+            <div className="flex items-center gap-2 mt-3">
+
+              <button
+                onClick={() =>
+                  decreaseQty(item.product.id)
+                }
+                className="px-3 py-1 border rounded"
+              >
+                −
+              </button>
+
+              <span>
+                {item.quantity}
+              </span>
+
+              <button
+                onClick={() =>
+                  increaseQty(item.product.id)
+                }
+                className="px-3 py-1 border rounded"
+              >
+                +
+              </button>
+
+            </div>
+
+            {/* REMOVE */}
 
             <button
               onClick={() =>
-                decreaseQty(
-                  item.product.id
-                )
+                removeItem(item.product.id)
               }
-              className="px-3 py-1 border rounded"
+              className="text-red-500 mt-2 text-sm"
             >
-              −
-            </button>
-
-            <span>
-              {item.quantity}
-            </span>
-
-            <button
-              onClick={() =>
-                increaseQty(
-                  item.product.id
-                )
-              }
-              className="px-3 py-1 border rounded"
-            >
-              +
+              Remove
             </button>
 
           </div>
-
-          {/* Remove */}
-
-          <button
-            onClick={() =>
-              removeItem(
-                item.product.id
-              )
-            }
-            className="text-red-500"
-          >
-            Remove
-          </button>
 
         </div>
 
       ))}
 
-      {/* TOTAL */}
+      {/* 🟢 PRICE SUMMARY */}
 
       {cart.length > 0 && (
 
-        <div className="mt-8 text-right">
+        <div className="mt-8 border p-6 rounded bg-gray-50">
 
-          <h2 className="text-2xl font-bold">
+          <h2 className="text-xl font-bold mb-4">
+            Price Details
+          </h2>
 
-            Total: ₹{total}
+          <p>
+            Subtotal: ₹{total}
+          </p>
+
+          {savedAmount > 0 && (
+
+            <p className="text-green-600">
+
+              You Saved: ₹{savedAmount}
+
+            </p>
+
+          )}
+
+          <p>
+            Delivery: ₹{deliveryCharge}
+          </p>
+
+          <h2 className="text-xl font-bold mt-2">
+
+            Final Total: ₹{finalTotal}
 
           </h2>
 
+        </div>
+
+      )}
+
+      {/* 🟢 TRUST BADGES */}
+
+      {cart.length > 0 && (
+
+        <div className="mt-6 text-sm text-gray-600">
+
+          ✔ Cash on Delivery Available  
+          <br/>
+
+          ✔ 7 Days Easy Return  
+          <br/>
+
+          ✔ 100% Cotton Quality  
+
+        </div>
+
+      )}
+
+      {/* 🟢 STICKY CHECKOUT BUTTON */}
+
+      {cart.length > 0 && (
+
+        <div className="sticky bottom-0 bg-white p-4 mt-6 border-t">
+
           <Link href="/checkout">
 
-  <button className="mt-4 bg-green-600 text-white px-6 py-3 rounded hover:bg-green-700">
+            <button className="w-full bg-green-600 text-white py-3 rounded hover:bg-green-700">
 
-    Proceed to Checkout
+              Proceed to Checkout
 
-  </button>
+            </button>
 
-</Link>
+          </Link>
 
         </div>
 
