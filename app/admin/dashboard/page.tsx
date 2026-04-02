@@ -7,6 +7,8 @@ export default function AdminDashboard() {
   const [orders, setOrders] =
     useState<any[]>([])
 
+  // Load Orders
+
   useEffect(() => {
 
     const loggedIn =
@@ -32,7 +34,15 @@ export default function AdminDashboard() {
           ) || "[]"
         )
 
-      setOrders(savedOrders)
+      // Sort Latest First
+      const sortedOrders =
+        savedOrders.sort(
+          (a: any, b: any) =>
+            new Date(b.date || 0).getTime() -
+            new Date(a.date || 0).getTime()
+        )
+
+      setOrders(sortedOrders)
 
     }
 
@@ -52,7 +62,8 @@ export default function AdminDashboard() {
   const totalRevenue =
     orders.reduce(
       (sum, order) =>
-        sum + Number(order.total || 0),
+        sum +
+        Number(order.total || 0),
       0
     )
 
@@ -63,30 +74,38 @@ export default function AdminDashboard() {
         o.status === "Pending"
     ).length
 
+  const shippedOrders =
+    orders.filter(
+      (o) =>
+        o.status === "Shipped"
+    ).length
+
   const deliveredOrders =
     orders.filter(
       (o) =>
         o.status === "Delivered"
     ).length
 
-  // 📅 Today's Sales (Safe Date)
+  // 📅 Today's Stats
 
   const today =
     new Date().toDateString()
 
+  const todayOrders =
+    orders.filter(
+      (o) =>
+        o.date &&
+        new Date(o.date)
+          .toDateString() === today
+    )
+
   const todayRevenue =
-    orders
-      .filter(
-        (o) =>
-          o.date &&
-          new Date(o.date)
-            .toDateString() === today
-      )
-      .reduce(
-        (sum, o) =>
-          sum + Number(o.total || 0),
-        0
-      )
+    todayOrders.reduce(
+      (sum, o) =>
+        sum +
+        Number(o.total || 0),
+      0
+    )
 
   // 🔐 Logout
 
@@ -122,7 +141,7 @@ export default function AdminDashboard() {
 
       {/* Header */}
 
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+      <div className="flex justify-between items-center mb-8">
 
         <h1 className="text-3xl font-bold">
 
@@ -158,7 +177,7 @@ export default function AdminDashboard() {
 
       {/* Summary Cards */}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-10">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 mb-10">
 
         <Card
           title="📦 Orders"
@@ -173,6 +192,11 @@ export default function AdminDashboard() {
         <Card
           title="🚚 Pending"
           value={pendingOrders}
+        />
+
+        <Card
+          title="📦 Shipped"
+          value={shippedOrders}
         />
 
         <Card
@@ -244,8 +268,7 @@ export default function AdminDashboard() {
             <tbody>
 
               {orders
-                .slice(-5)
-                .reverse()
+                .slice(0, 5)
                 .map(
                   (order, i) => (
 

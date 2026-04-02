@@ -1,5 +1,5 @@
 "use client"
-
+import { supportedPincodes } from "@/data/pincodes"
 import { useContext, useState } from "react"
 import { CartContext } from "../../lib/cartContext"
 
@@ -86,22 +86,37 @@ export default function CheckoutPage() {
 
   // 🟢 VALIDATE PINCODE
 
-  const validatePincode = () => {
+const validatePincode = () => {
 
-    const pincodeRegex = /^[1-9][0-9]{5}$/
+  const pincodeRegex = /^[1-9][0-9]{5}$/
 
-    if (!pincodeRegex.test(pincode)) {
+  // Format check
 
-      setPincodeError(
-        "Enter valid 6-digit Indian pincode"
-      )
+  if (!pincodeRegex.test(pincode)) {
 
-      return false
-    }
+    setPincodeError(
+      "Enter valid 6-digit Indian pincode"
+    )
 
-    return true
+    return false
 
   }
+
+  // Delivery support check
+
+  if (!supportedPincodes.includes(pincode)) {
+
+    setPincodeError(
+      "❌ Delivery not available in this area"
+    )
+
+    return false
+
+  }
+
+  return true
+
+}
 
   // 🟢 VALIDATE PHONE
 
@@ -122,9 +137,57 @@ export default function CheckoutPage() {
 
   }
 
+  // 🟢 SAVE ORDER TO MONGODB
+
+const saveOrderToDB = async (orderData: any) => {
+
+  try {
+
+    const response = await fetch(
+      "/api/orders",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
+        body: JSON.stringify(
+          orderData
+        ),
+      }
+    )
+
+    const result =
+      await response.json()
+
+    if (result.success) {
+
+      console.log(
+        "✅ Order saved to MongoDB"
+      )
+
+    } else {
+
+      console.log(
+        "❌ MongoDB save failed"
+      )
+
+    }
+
+  } catch (error) {
+
+    console.log(
+      "Error saving order:",
+      error
+    )
+
+  }
+
+}
+
   // 🟢 WHATSAPP ORDER
 
-  const handleWhatsAppOrder = () => {
+  const handleWhatsAppOrder = async () => {
 
     if (!name || !phone || !address || !pincode) {
 
@@ -137,6 +200,16 @@ export default function CheckoutPage() {
     if (!validatePhone()) return
 
     if (!validatePincode()) return
+
+    if (!supportedPincodes.includes(pincode)) {
+
+  alert(
+    "❌ Sorry! Delivery not available in this pincode."
+  )
+
+  return
+
+}
 
     // 🟢 Generate Order ID
 
@@ -202,7 +275,9 @@ Final Total: ₹${finalTotal}`
         new Date().toLocaleString()
 
     }
+    // 🟢 SAVE TO MONGODB
 
+await saveOrderToDB(orderData)
     const existingOrders =
       JSON.parse(
         localStorage.getItem("orders") || "[]"
@@ -320,6 +395,35 @@ Final Total: ₹${finalTotal}`
 
           )}
 
+          {/* 🟢 DELIVERY STATUS */}
+
+{pincode.length === 6 &&
+ !pincodeError && (
+
+  supportedPincodes.includes(pincode)
+
+    ? (
+
+      <p className="text-green-600 text-sm mt-1">
+
+        ✅ Delivery Available 🚚
+
+      </p>
+
+    )
+
+    : (
+
+      <p className="text-red-500 text-sm mt-1">
+
+        ❌ Not Deliverable
+
+      </p>
+
+    )
+
+)}
+
         </div>
 
       </div>
@@ -392,7 +496,23 @@ Final Total: ₹${finalTotal}`
           Delivery: ₹{deliveryCharge}
 
         </p>
+{deliveryCharge === 0 ? (
 
+  <p className="text-green-600 text-sm">
+
+    🎉 Free delivery applied!
+
+  </p>
+
+) : (
+
+  <p className="text-gray-500 text-sm">
+
+    Add ₹{999 - total} more for free delivery
+
+  </p>
+
+)}
         <p>
 
           Discount: ₹{discount}
