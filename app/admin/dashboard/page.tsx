@@ -7,7 +7,10 @@ export default function AdminDashboard() {
   const [orders, setOrders] =
     useState<any[]>([])
 
-  // Load Orders
+  const [loading, setLoading] =
+    useState(true)
+
+  // Load Orders from MongoDB
 
   useEffect(() => {
 
@@ -25,34 +28,55 @@ export default function AdminDashboard() {
 
     }
 
-    try {
-
-      const savedOrders =
-        JSON.parse(
-          localStorage.getItem(
-            "orders"
-          ) || "[]"
-        )
-
-      // Sort Latest First
-      const sortedOrders =
-        savedOrders.sort(
-          (a: any, b: any) =>
-            new Date(b.date || 0).getTime() -
-            new Date(a.date || 0).getTime()
-        )
-
-      setOrders(sortedOrders)
-
-    }
-
-    catch {
-
-      setOrders([])
-
-    }
+    fetchOrders()
 
   }, [])
+
+  const fetchOrders =
+    async () => {
+
+      try {
+
+        const res =
+          await fetch(
+            "/api/orders"
+          )
+
+        const data =
+          await res.json()
+
+        console.log(
+          "Dashboard API:",
+          data
+        )
+
+        const fetchedOrders =
+          data.orders || []
+
+        setOrders(
+          fetchedOrders
+        )
+
+      }
+
+      catch (error) {
+
+        console.log(
+          "Dashboard Fetch Error:",
+          error
+        )
+
+        setOrders([])
+
+      }
+
+      finally {
+
+        setLoading(false)
+
+      }
+
+    }
 
   // 📊 Metrics
 
@@ -70,7 +94,6 @@ export default function AdminDashboard() {
   const pendingOrders =
     orders.filter(
       (o) =>
-        !o.status ||
         o.status === "Pending"
     ).length
 
@@ -94,8 +117,8 @@ export default function AdminDashboard() {
   const todayOrders =
     orders.filter(
       (o) =>
-        o.date &&
-        new Date(o.date)
+        o.createdAt &&
+        new Date(o.createdAt)
           .toDateString() === today
     )
 
@@ -134,6 +157,20 @@ export default function AdminDashboard() {
       return "bg-yellow-500"
 
     }
+
+  if (loading) {
+
+    return (
+
+      <div className="p-6">
+
+        Loading Dashboard...
+
+      </div>
+
+    )
+
+  }
 
   return (
 
@@ -238,27 +275,19 @@ export default function AdminDashboard() {
               <tr>
 
                 <th className="p-3 text-left">
-
                   Customer
-
                 </th>
 
                 <th className="p-3 text-left">
-
                   Phone
-
                 </th>
 
                 <th className="p-3 text-left">
-
                   Total
-
                 </th>
 
                 <th className="p-3 text-left">
-
                   Status
-
                 </th>
 
               </tr>
