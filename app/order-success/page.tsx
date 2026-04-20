@@ -1,9 +1,15 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 
-export default function OrderSuccessPage() {
+
+
+/* ------------------------------
+   INNER COMPONENT
+   ------------------------------ */
+
+function OrderSuccessContent() {
 
   const searchParams =
     useSearchParams()
@@ -17,6 +23,8 @@ export default function OrderSuccessPage() {
 
 
   useEffect(() => {
+
+    if (!orderId) return
 
     const orders =
       JSON.parse(
@@ -80,7 +88,7 @@ export default function OrderSuccessPage() {
 
 
 
-        {/* ✅ FIXED */}
+        {/* CUSTOMER DETAILS */}
 
         <p>
           👤 Name:
@@ -168,6 +176,32 @@ export default function OrderSuccessPage() {
       </div>
 
     </div>
+
+  )
+
+}
+
+
+
+/* ------------------------------
+   MAIN PAGE (Suspense Wrapper)
+   ------------------------------ */
+
+export default function OrderSuccessPage() {
+
+  return (
+
+    <Suspense
+      fallback={
+        <div className="p-10 text-center">
+          Loading order details...
+        </div>
+      }
+    >
+
+      <OrderSuccessContent />
+
+    </Suspense>
 
   )
 
