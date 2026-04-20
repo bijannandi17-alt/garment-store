@@ -18,7 +18,7 @@ Trending Nighty
 {trending.map(p => (
 
 <ProductCard
-  id={p.id}
+  _id={String(p.id)}
   name={p.name}
   price={p.price}
   oldPrice={p.oldPrice}
