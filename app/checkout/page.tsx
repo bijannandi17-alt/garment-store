@@ -1,4 +1,5 @@
 "use client"
+
 import { supportedPincodes } from "@/data/pincodes"
 import { useContext, useState } from "react"
 import { CartContext } from "../../lib/cartContext"
@@ -13,309 +14,241 @@ export default function CheckoutPage() {
 
   const { cart, clearCart } = cartContext
 
-  // 🟢 CUSTOMER DETAILS
+  /* 🟢 CUSTOMER DETAILS */
 
   const [name, setName] = useState("")
   const [phone, setPhone] = useState("")
   const [address, setAddress] = useState("")
   const [pincode, setPincode] = useState("")
-  const [pincodeError, setPincodeError] = useState("")
-  const [phoneError, setPhoneError] = useState("")
 
-  // 🟢 COUPON SYSTEM
+  /* 🟢 PAYMENT METHOD */
 
-  const [coupon, setCoupon] = useState("")
-  const [discount, setDiscount] = useState(0)
-  const [couponMessage, setCouponMessage] = useState("")
+  const [paymentMethod, setPaymentMethod] =
+    useState("whatsapp")
 
-  // 🟢 TOTAL
+  /* 🟢 TOTAL */
 
   const total = cart.reduce(
     (sum, item) =>
       sum +
-      item.product.price *
+      (item.product.price || 0) *
       item.quantity,
     0
   )
 
-  // 🟢 DELIVERY
-
   const deliveryCharge =
     total >= 999 ? 0 : 60
 
-  // 🟢 APPLY COUPON
-
-  const applyCoupon = () => {
-
-    if (coupon === "SAVE50") {
-
-      setDiscount(50)
-      setCouponMessage("₹50 discount applied")
-
-    }
-
-    else if (coupon === "SAVE100") {
-
-      setDiscount(100)
-      setCouponMessage("₹100 discount applied")
-
-    }
-
-    else if (coupon === "FREESHIP") {
-
-      setDiscount(deliveryCharge)
-      setCouponMessage("Free delivery applied")
-
-    }
-
-    else {
-
-      setDiscount(0)
-      setCouponMessage("Invalid coupon")
-
-    }
-
-  }
-
-  // 🟢 FINAL TOTAL
-
   const finalTotal =
-    total +
-    deliveryCharge -
-    discount
+    total + deliveryCharge
 
-  // 🟢 VALIDATE PINCODE
+  /* 🟢 SAVE ORDER */
 
-const validatePincode = () => {
+  const saveOrderToDB =
+    async (orderData: any) => {
 
-  const pincodeRegex = /^[1-9][0-9]{5}$/
+      try {
 
-  // Format check
+        const response =
+          await fetch("/api/orders", {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            body:
+              JSON.stringify(orderData),
+          })
 
-  if (!pincodeRegex.test(pincode)) {
+        return await response.json()
 
-    setPincodeError(
-      "Enter valid 6-digit Indian pincode"
-    )
-
-    return false
-
-  }
-
-  // Delivery support check
-
-  if (!supportedPincodes.includes(pincode)) {
-
-    setPincodeError(
-      "❌ Delivery not available in this area"
-    )
-
-    return false
-
-  }
-
-  return true
-
-}
-
-  // 🟢 VALIDATE PHONE
-
-  const validatePhone = () => {
-
-    const phoneRegex = /^[6-9][0-9]{9}$/
-
-    if (!phoneRegex.test(phone)) {
-
-      setPhoneError(
-        "Enter valid 10-digit mobile number"
-      )
-
-      return false
-    }
-
-    return true
-
-  }
-
-  // 🟢 SAVE ORDER TO MONGODB
-
-const saveOrderToDB = async (orderData: any) => {
-
-  try {
-
-    const response = await fetch(
-      "/api/orders",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type":
-            "application/json",
-        },
-        body: JSON.stringify(
-          orderData
-        ),
       }
-    )
 
-    const result =
-      await response.json()
+      catch (error) {
 
-    if (result.success) {
+        console.log(
+          "DB Error:",
+          error
+        )
 
-      console.log(
-        "✅ Order saved to MongoDB"
-      )
-
-    } else {
-
-      console.log(
-        "❌ MongoDB save failed"
-      )
+      }
 
     }
 
-  } catch (error) {
+  /* 🟢 CREATE ORDER */
 
-    console.log(
-      "Error saving order:",
-      error
-    )
+  const createOrder =
+    async () => {
 
-  }
+      if (
+        !name ||
+        !phone ||
+        !address ||
+        !pincode
+      ) {
 
-}
+        alert(
+          "Please fill all details"
+        )
 
-  // 🟢 WHATSAPP ORDER
+        return null
 
-  const handleWhatsAppOrder = async () => {
+      }
 
-    if (!name || !phone || !address || !pincode) {
+      const orderId =
+        "ORD" + Date.now()
 
-      alert("Please fill all details")
+      const orderData = {
 
-      return
+        id: orderId,
 
-    }
+        customer: {
+          name,
+          phone,
+          address,
+          pincode
+        },
 
-    if (!validatePhone()) return
+        items: cart,
 
-    if (!validatePincode()) return
+        total: finalTotal,
 
-    if (!supportedPincodes.includes(pincode)) {
+        paymentMethod,
 
-  alert(
-    "❌ Sorry! Delivery not available in this pincode."
-  )
+        status: "Pending",
 
-  return
+        createdAt:
+          new Date()
+      }
 
-}
+      await saveOrderToDB(orderData)
 
-    // 🟢 Generate Order ID
+      /* Save Local */
 
-    const orderId =
-      "ORD" +
-      Date.now()
+      const existingOrders =
+        JSON.parse(
+          localStorage.getItem("orders")
+          || "[]"
+        )
 
-    // 🟢 Items Text
+      existingOrders.push(orderData)
 
-    const orderItems = cart.map(item =>
-      `${item.product.name} x ${item.quantity} = ₹${item.product.price * item.quantity}`
-    ).join("%0A")
-
-    // 🟢 WhatsApp Message
-
-    const message =
-`🛍️ *New Order - Amropali Fashion*%0A
-🆔 Order ID: ${orderId}%0A
-
-👤 Name: ${name}%0A
-📞 Phone: ${phone}%0A
-
-🏠 Address:%0A
-${address}%0A
-
-📮 Pincode: ${pincode}%0A
-
-📦 *Order Details:*%0A
-${orderItems}%0A
-
-Subtotal: ₹${total}%0A
-Delivery: ₹${deliveryCharge}%0A
-Discount: ₹${discount}%0A
-Final Total: ₹${finalTotal}`
-
-    const whatsappNumber =
-      "918951270795"
-
-    const url =
-`https://wa.me/${whatsappNumber}?text=${message}`
-
-    // 🟢 SAVE ORDER
-
-    const orderData = {
-
-      id: orderId,
-
-      name,
-      phone,
-      address,
-      pincode,
-
-      items: cart,
-
-      coupon,
-      discount,
-
-      total: finalTotal,
-
-      status: "Pending",
-
-      date:
-        new Date().toLocaleString()
-
-    }
-    // 🟢 SAVE TO MONGODB
-
-await saveOrderToDB(orderData)
-    const existingOrders =
-      JSON.parse(
-        localStorage.getItem("orders") || "[]"
+      localStorage.setItem(
+        "orders",
+        JSON.stringify(existingOrders)
       )
 
-    existingOrders.push(orderData)
+      clearCart()
 
-    localStorage.setItem(
-      "orders",
-      JSON.stringify(existingOrders)
-    )
+      return orderId
 
-    // 🟢 OPEN WHATSAPP
+    }
 
-    window.open(url, "_blank")
+  /* 🟢 WHATSAPP ORDER */
 
-    clearCart()
+  const handleWhatsAppOrder =
+    async () => {
 
-    setTimeout(() => {
+      const orderId =
+        await createOrder()
+
+      if (!orderId) return
+
+      const whatsappNumber =
+        "918951270795"
+
+      const url =
+        `https://wa.me/${whatsappNumber}?text=New Order ID: ${orderId}`
+
+      window.open(url, "_blank")
 
       window.location.href =
-        "/order-success"
+        `/order-success?orderId=${orderId}`
 
-    }, 500)
+    }
 
-  }
+  /* 🟢 COD ORDER */
+
+  const handleCODOrder =
+    async () => {
+
+      const orderId =
+        await createOrder()
+
+      if (!orderId) return
+
+      window.location.href =
+        `/order-success?orderId=${orderId}`
+
+    }
+
+  /* 🟢 UPI PAYMENT */
+
+  const handleUPIOrder =
+    async () => {
+
+      const orderId =
+        await createOrder()
+
+      if (!orderId) return
+
+      const upiId =
+        "yourupi@okaxis"   // change this
+
+      const url =
+`upi://pay?pa=${upiId}&pn=Amropali Fashion&am=${finalTotal}&cu=INR`
+
+      window.location.href = url
+
+      setTimeout(() => {
+
+        window.location.href =
+          `/order-success?orderId=${orderId}`
+
+      }, 3000)
+
+    }
+
+  /* 🟢 MAIN PLACE ORDER */
+
+  const handlePlaceOrder =
+    () => {
+
+      if (
+        paymentMethod === "whatsapp"
+      ) {
+
+        handleWhatsAppOrder()
+
+      }
+
+      else if (
+        paymentMethod === "cod"
+      ) {
+
+        handleCODOrder()
+
+      }
+
+      else if (
+        paymentMethod === "upi"
+      ) {
+
+        handleUPIOrder()
+
+      }
+
+    }
 
   return (
 
     <div className="p-10 max-w-3xl mx-auto">
 
       <h1 className="text-3xl font-bold mb-6">
-
         Checkout 🧾
-
       </h1>
 
-      {/* CUSTOMER DETAILS */}
+      {/* CUSTOMER */}
 
       <div className="space-y-4">
 
@@ -333,24 +266,11 @@ await saveOrderToDB(orderData)
           type="tel"
           placeholder="Phone Number"
           value={phone}
-          onChange={(e) => {
-
+          onChange={(e) =>
             setPhone(e.target.value)
-            setPhoneError("")
-
-          }}
+          }
           className="w-full border p-3 rounded"
         />
-
-        {phoneError && (
-
-          <p className="text-red-500 text-sm">
-
-            {phoneError}
-
-          </p>
-
-        )}
 
         <textarea
           placeholder="Full Address"
@@ -361,176 +281,95 @@ await saveOrderToDB(orderData)
           className="w-full border p-3 rounded"
         />
 
-        {/* PINCODE */}
-
-        <div>
-
-          <label className="block font-semibold mb-1">
-
-            Pincode
-
-          </label>
-
-          <input
-            type="text"
-            placeholder="Enter 6-digit Pincode"
-            value={pincode}
-            onChange={(e) => {
-
-              setPincode(e.target.value)
-              setPincodeError("")
-
-            }}
-            className="w-full border p-3 rounded"
-            maxLength={6}
-          />
-
-          {pincodeError && (
-
-            <p className="text-red-500 text-sm mt-1">
-
-              {pincodeError}
-
-            </p>
-
-          )}
-
-          {/* 🟢 DELIVERY STATUS */}
-
-{pincode.length === 6 &&
- !pincodeError && (
-
-  supportedPincodes.includes(pincode)
-
-    ? (
-
-      <p className="text-green-600 text-sm mt-1">
-
-        ✅ Delivery Available 🚚
-
-      </p>
-
-    )
-
-    : (
-
-      <p className="text-red-500 text-sm mt-1">
-
-        ❌ Not Deliverable
-
-      </p>
-
-    )
-
-)}
-
-        </div>
+        <input
+          type="text"
+          placeholder="Pincode"
+          value={pincode}
+          onChange={(e) =>
+            setPincode(e.target.value)
+          }
+          className="w-full border p-3 rounded"
+        />
 
       </div>
 
-      {/* COUPON SECTION */}
+      {/* PAYMENT METHOD */}
 
-      <div className="mt-8 border p-4 rounded bg-white">
+      <div className="mt-8 border p-4 rounded">
 
-        <h3 className="font-bold mb-2">
-
-          Apply Coupon 🎟️
-
+        <h3 className="font-bold mb-3">
+          Select Payment Method 💳
         </h3>
 
-        <div className="flex gap-2">
+        <label className="block mb-2">
 
           <input
-            type="text"
-            placeholder="Enter coupon code"
-            value={coupon}
-            onChange={(e) =>
-              setCoupon(
-                e.target.value.toUpperCase()
-              )
+            type="radio"
+            value="whatsapp"
+            checked={
+              paymentMethod === "whatsapp"
             }
-            className="flex-1 border p-2 rounded"
+            onChange={() =>
+              setPaymentMethod("whatsapp")
+            }
           />
 
-          <button
-            onClick={applyCoupon}
-            className="bg-blue-600 text-white px-4 py-2 rounded"
-          >
+          {" "}WhatsApp Order 📱
 
-            Apply
+        </label>
 
-          </button>
+        <label className="block mb-2">
 
-        </div>
+          <input
+            type="radio"
+            value="cod"
+            checked={
+              paymentMethod === "cod"
+            }
+            onChange={() =>
+              setPaymentMethod("cod")
+            }
+          />
 
-        {couponMessage && (
+          {" "}Cash on Delivery 💰
 
-          <p className="text-sm mt-2 text-green-600">
+        </label>
 
-            {couponMessage}
+        <label className="block">
 
-          </p>
+          <input
+            type="radio"
+            value="upi"
+            checked={
+              paymentMethod === "upi"
+            }
+            onChange={() =>
+              setPaymentMethod("upi")
+            }
+          />
 
-        )}
+          {" "}UPI Payment 📲
+
+        </label>
 
       </div>
 
-      {/* ORDER SUMMARY */}
+      {/* TOTAL */}
 
       <div className="mt-8 border p-6 rounded bg-gray-50">
 
-        <h2 className="text-xl font-bold mb-4">
-
-          Order Summary 📦
-
-        </h2>
-
-        <p>
-
-          Subtotal: ₹{total}
-
-        </p>
-
-        <p>
-
-          Delivery: ₹{deliveryCharge}
-
-        </p>
-{deliveryCharge === 0 ? (
-
-  <p className="text-green-600 text-sm">
-
-    🎉 Free delivery applied!
-
-  </p>
-
-) : (
-
-  <p className="text-gray-500 text-sm">
-
-    Add ₹{999 - total} more for free delivery
-
-  </p>
-
-)}
-        <p>
-
-          Discount: ₹{discount}
-
-        </p>
-
-        <h2 className="text-xl font-bold mt-2">
+        <h2 className="text-xl font-bold">
 
           Final Total: ₹{finalTotal}
 
         </h2>
 
         <button
-          onClick={handleWhatsAppOrder}
-          className="mt-6 w-full bg-green-600 text-white px-6 py-3 rounded hover:bg-green-700"
+          onClick={handlePlaceOrder}
+          className="mt-6 w-full bg-green-600 text-white px-6 py-3 rounded"
         >
 
-          Place Order via WhatsApp 📱
+          Place Order 🚀
 
         </button>
 

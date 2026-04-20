@@ -18,7 +18,7 @@ export default function AdminOrdersPage() {
 
 
 
-  // 🟢 Fetch Orders + Stats
+  /* 🟢 Fetch Orders */
 
   async function fetchOrders() {
 
@@ -32,18 +32,24 @@ export default function AdminOrdersPage() {
       const data =
         await res.json()
 
-      // FIX: API now returns { orders, stats }
+      if (data.success) {
 
-      setOrders(data.orders || [])
+        setOrders(
+          data.orders || []
+        )
 
-      setStats(data.stats || null)
+        setStats(
+          data.stats || null
+        )
+
+      }
 
     }
 
     catch (error) {
 
       console.log(
-        "Fetch Orders Error:",
+        "Fetch Error:",
         error
       )
 
@@ -59,7 +65,7 @@ export default function AdminOrdersPage() {
 
 
 
-  // 🟢 Load Orders
+  /* 🟢 Load */
 
   useEffect(() => {
 
@@ -83,128 +89,122 @@ export default function AdminOrdersPage() {
 
 
 
-  // 🟢 Update Status
+  /* 🟢 Update Status */
 
-  const updateStatus =
-    async (
-      id: string,
-      status: string
-    ) => {
+  async function updateStatus(
+    id: string,
+    status: string
+  ) {
 
-      try {
+    try {
 
-        await fetch(
-          "/api/orders",
-          {
+      await fetch(
+        "/api/orders",
+        {
 
-            method: "PATCH",
+          method: "PATCH",
 
-            headers: {
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
 
-              "Content-Type":
-                "application/json"
+          body: JSON.stringify({
+            id,
+            status
+          })
 
-            },
+        }
+      )
 
-            body: JSON.stringify({
-
-              id,
-              status
-
-            })
-
-          }
-        )
-
-        fetchOrders()
-
-      }
-
-      catch (error) {
-
-        console.log(
-          "Status Update Error:",
-          error
-        )
-
-      }
+      fetchOrders()
 
     }
 
+    catch (error) {
 
-
-  // 🟢 Delete Order
-
-  const deleteOrder =
-    async (id: string) => {
-
-      const confirmDelete =
-        confirm(
-          "Delete this order?"
-        )
-
-      if (!confirmDelete)
-        return
-
-      try {
-
-        await fetch(
-          "/api/orders",
-          {
-
-            method: "DELETE",
-
-            headers: {
-
-              "Content-Type":
-                "application/json"
-
-            },
-
-            body: JSON.stringify({
-
-              id
-
-            })
-
-          }
-        )
-
-        fetchOrders()
-
-      }
-
-      catch (error) {
-
-        console.log(
-          "Delete Error:",
-          error
-        )
-
-      }
+      console.log(
+        "Status Error:",
+        error
+      )
 
     }
 
+  }
 
 
-  // 🟢 Status Colors
 
-  const getStatusColor =
-    (status: string) => {
+  /* 🟢 Delete */
 
-      if (status === "Delivered")
-        return "bg-green-100 text-green-700"
+  async function deleteOrder(
+    id: string
+  ) {
 
-      if (status === "Shipped")
-        return "bg-blue-100 text-blue-700"
+    const ok =
+      confirm(
+        "Delete this order?"
+      )
 
-      return "bg-yellow-100 text-yellow-700"
+    if (!ok) return
+
+
+
+    try {
+
+      await fetch(
+        "/api/orders",
+        {
+
+          method: "DELETE",
+
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+
+          body: JSON.stringify({
+            id
+          })
+
+        }
+      )
+
+      fetchOrders()
 
     }
 
+    catch (error) {
+
+      console.log(
+        "Delete Error:",
+        error
+      )
+
+    }
+
+  }
 
 
-  // 🟢 Filter Orders
+
+  /* 🟢 Status Color */
+
+  function getStatusColor(
+    status: string
+  ) {
+
+    if (status === "Delivered")
+      return "bg-green-100 text-green-700"
+
+    if (status === "Shipped")
+      return "bg-blue-100 text-blue-700"
+
+    return "bg-yellow-100 text-yellow-700"
+
+  }
+
+
+
+  /* 🟢 Filter */
 
   const filteredOrders =
     orders.filter(order => {
@@ -247,117 +247,41 @@ export default function AdminOrdersPage() {
 
 
 
-      {/* 📊 Dashboard Stats */}
+      {/* 📊 Stats */}
 
       {stats && (
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
 
-          <div className="bg-white border p-4 rounded shadow">
+          <StatBox
+            title="Total Orders"
+            value={stats.totalOrders}
+          />
 
-            <p className="text-sm text-gray-500">
+          <StatBox
+            title="Pending"
+            value={stats.pendingOrders}
+          />
 
-              Total Orders
+          <StatBox
+            title="Shipped"
+            value={stats.shippedOrders}
+          />
 
-            </p>
+          <StatBox
+            title="Delivered"
+            value={stats.deliveredOrders}
+          />
 
-            <p className="text-xl font-bold">
+          <StatBox
+            title="Today"
+            value={stats.todayOrders}
+          />
 
-              {stats.totalOrders}
-
-            </p>
-
-          </div>
-
-
-
-          <div className="bg-yellow-50 border p-4 rounded shadow">
-
-            <p className="text-sm text-gray-500">
-
-              Pending
-
-            </p>
-
-            <p className="text-xl font-bold">
-
-              {stats.pendingOrders}
-
-            </p>
-
-          </div>
-
-
-
-          <div className="bg-blue-50 border p-4 rounded shadow">
-
-            <p className="text-sm text-gray-500">
-
-              Shipped
-
-            </p>
-
-            <p className="text-xl font-bold">
-
-              {stats.shippedOrders}
-
-            </p>
-
-          </div>
-
-
-
-          <div className="bg-green-50 border p-4 rounded shadow">
-
-            <p className="text-sm text-gray-500">
-
-              Delivered
-
-            </p>
-
-            <p className="text-xl font-bold">
-
-              {stats.deliveredOrders}
-
-            </p>
-
-          </div>
-
-
-
-          <div className="bg-purple-50 border p-4 rounded shadow">
-
-            <p className="text-sm text-gray-500">
-
-              Today
-
-            </p>
-
-            <p className="text-xl font-bold">
-
-              {stats.todayOrders}
-
-            </p>
-
-          </div>
-
-
-
-          <div className="bg-gray-100 border p-4 rounded shadow">
-
-            <p className="text-sm text-gray-500">
-
-              Revenue
-
-            </p>
-
-            <p className="text-xl font-bold">
-
-              ₹{stats.totalRevenue}
-
-            </p>
-
-          </div>
+          <StatBox
+            title="Revenue"
+            value={`₹${stats.totalRevenue}`}
+          />
 
         </div>
 
@@ -369,7 +293,7 @@ export default function AdminOrdersPage() {
 
       <input
         type="text"
-        placeholder="Search by name, phone or order ID 🔍"
+        placeholder="Search orders 🔍"
         value={search}
         onChange={(e) =>
           setSearch(e.target.value)
@@ -379,47 +303,29 @@ export default function AdminOrdersPage() {
 
 
 
-      {loading && (
-
-        <p>Loading orders...</p>
-
-      )}
+      {loading &&
+        <p>Loading...</p>}
 
 
 
       {!loading &&
-        filteredOrders.length === 0 && (
-
-        <p>No matching orders</p>
-
-      )}
-
-
-
-      {/* 🟢 Orders */}
-
-      {filteredOrders.map(
-        (order) => (
+        filteredOrders.map(order => (
 
           <div
             key={order._id}
-            className="border p-5 mb-6 rounded bg-gray-50 shadow-sm"
+            className="border p-5 mb-6 rounded bg-gray-50"
           >
 
-            {/* Header */}
+            <div className="flex justify-between">
 
-            <div className="flex justify-between items-center flex-wrap">
+              <h2 className="font-bold">
 
-              <h2 className="font-bold text-lg">
-
-                Order ID:
-                {" "}
-                {order.orderId || "N/A"}
+                {order.orderId}
 
               </h2>
 
               <span
-                className={`px-3 py-1 rounded text-sm font-semibold ${getStatusColor(order.status)}`}
+                className={`px-3 py-1 rounded text-sm ${getStatusColor(order.status)}`}
               >
 
                 {order.status}
@@ -430,68 +336,27 @@ export default function AdminOrdersPage() {
 
 
 
-            {/* Customer */}
+            <p className="mt-2">
 
-            <div className="mt-3 space-y-1">
+              {order.name}
+              {" — "}
+              {order.phone}
 
-              <p>
+            </p>
 
-                <strong>Name:</strong>
-                {" "}
-                {order.name}
 
-              </p>
 
-              <p>
+            <p className="text-sm text-gray-500">
 
-                <strong>Phone:</strong>
-                {" "}
-                {order.phone}
+              {order.address}
 
-              </p>
-
-              <p>
-
-                <strong>Address:</strong>
-                {" "}
-                {order.address}
-
-              </p>
-
-              <p>
-
-                <strong>Pincode:</strong>
-                {" "}
-                {order.pincode}
-
-              </p>
-
-              <p>
-
-                <strong>Date:</strong>
-                {" "}
-
-                {order.createdAt
-                  ? new Date(
-                      order.createdAt
-                    ).toLocaleString()
-                  : "N/A"}
-
-              </p>
-
-            </div>
+            </p>
 
 
 
             {/* Items */}
 
-            <div className="mt-4">
-
-              <h3 className="font-bold">
-
-                Items:
-
-              </h3>
+            <div className="mt-3">
 
               {(order.items || []).map(
                 (item: any, i: number) => (
@@ -501,15 +366,11 @@ export default function AdminOrdersPage() {
                     className="border p-2 mt-2 rounded bg-white"
                   >
 
-                    {item.name || "Item"}
-
-                    {" "}x{" "}
-
-                    {item.qty || 1}
-
-                    {" "}— ₹
-
-                    {item.price || 0}
+                    {item.name}
+                    {" x "}
+                    {item.qty}
+                    {" — ₹"}
+                    {item.price}
 
                   </div>
 
@@ -520,9 +381,15 @@ export default function AdminOrdersPage() {
 
 
 
-            {/* Buttons */}
+            <p className="font-bold mt-3">
 
-            <div className="flex gap-2 mt-4 flex-wrap">
+              Total ₹{order.total}
+
+            </p>
+
+
+
+            <div className="flex gap-2 mt-4">
 
               <button
                 onClick={() =>
@@ -531,10 +398,10 @@ export default function AdminOrdersPage() {
                     "Shipped"
                   )
                 }
-                className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+                className="bg-blue-500 text-white px-3 py-1 rounded"
               >
 
-                Mark Shipped
+                Ship
 
               </button>
 
@@ -547,10 +414,10 @@ export default function AdminOrdersPage() {
                     "Delivered"
                   )
                 }
-                className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+                className="bg-green-600 text-white px-3 py-1 rounded"
               >
 
-                Mark Delivered
+                Deliver
 
               </button>
 
@@ -562,7 +429,7 @@ export default function AdminOrdersPage() {
                     order._id
                   )
                 }
-                className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+                className="bg-red-600 text-white px-3 py-1 rounded"
               >
 
                 Delete
@@ -571,20 +438,40 @@ export default function AdminOrdersPage() {
 
             </div>
 
-
-
-            {/* Total */}
-
-            <p className="font-bold mt-4 text-lg">
-
-              Total: ₹{order.total || 0}
-
-            </p>
-
           </div>
 
-        )
-      )}
+        ))}
+
+    </div>
+
+  )
+
+}
+
+
+
+/* 🟢 Stat Box */
+
+function StatBox({
+  title,
+  value
+}: any) {
+
+  return (
+
+    <div className="bg-white border p-4 rounded shadow">
+
+      <p className="text-sm text-gray-500">
+
+        {title}
+
+      </p>
+
+      <p className="text-xl font-bold">
+
+        {value}
+
+      </p>
 
     </div>
 

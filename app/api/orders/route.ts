@@ -17,57 +17,124 @@ export async function POST(
     const body =
       await request.json()
 
-    // 🆔 Generate Unique Order ID
+    console.log(
+      "Incoming Order Body:",
+      body
+    )
+
+
+
+    /* 🆔 Generate Order ID */
 
     const orderId =
-      "ORD" +
-      Date.now()
+      "ORD" + Date.now()
 
 
 
-    // 🟢 Fix Items Structure
+    /* 🟢 Validate Fields */
+
+    if (
+
+      !body.customer?.name ||
+      !body.customer?.phone ||
+      !body.customer?.address ||
+      !body.items ||
+      body.items.length === 0
+
+    ) {
+
+      return NextResponse.json(
+
+        {
+
+          success: false,
+          message:
+            "Missing required fields"
+
+        },
+
+        { status: 400 }
+
+      )
+
+    }
+
+
+
+    /* 🟢 Format Items */
 
     const formattedItems =
-      (body.items || []).map(
+      body.items.map(
         (item: any) => ({
 
           name:
-            item.name
-            || item.product?.name
+            item.product?.name
             || "Unknown",
 
           price:
-            item.price
-            || item.product?.price
-            || 0,
+            Number(
+              item.product?.price
+              || 0
+            ),
 
           qty:
-            item.qty
-            || item.quantity
-            || 1
+            Number(
+              item.quantity
+              || 1
+            ),
+
+          image:
+            item.product?.image
+            || ""
 
         })
       )
 
 
 
+    /* 🟢 Calculate Total */
+
+    const total =
+      formattedItems.reduce(
+
+        (sum: number, item: any) =>
+
+          sum +
+          item.price *
+          item.qty,
+
+        0
+
+      )
+
+
+
+    /* 🟢 Save Order */
+
     const newOrder =
       new Order({
 
         orderId,
 
-        name: body.name,
-        phone: body.phone,
-        address: body.address,
-        pincode: body.pincode,
+        name:
+          body.customer.name,
 
-        items: formattedItems,
+        phone:
+          body.customer.phone,
 
-        total: body.total,
+        address:
+          body.customer.address,
 
-        status: "Pending",
+        pincode:
+          body.customer.pincode,
 
-        createdAt: new Date()
+        items:
+          formattedItems,
+
+        total,
+
+        status:
+          "Pending"
 
       })
 
@@ -98,12 +165,17 @@ export async function POST(
     )
 
     return NextResponse.json(
+
       {
+
         success: false,
         message:
           "Failed to save order"
+
       },
+
       { status: 500 }
+
     )
 
   }
@@ -112,7 +184,7 @@ export async function POST(
 
 
 
-/* 🟢 GET ALL ORDERS + DASHBOARD STATS */
+/* 🟢 GET ALL ORDERS */
 
 export async function GET() {
 
@@ -120,88 +192,20 @@ export async function GET() {
 
     await connectDB()
 
-
-
     const orders =
-      await Order.find({})
-        .sort({ createdAt: -1 })
-
-
-
-    /* 📊 CALCULATE STATS */
-
-    const totalOrders =
-      orders.length
-
-
-
-    const pendingOrders =
-      orders.filter(
-        o => o.status === "Pending"
-      ).length
-
-
-
-    const shippedOrders =
-      orders.filter(
-        o => o.status === "Shipped"
-      ).length
-
-
-
-    const deliveredOrders =
-      orders.filter(
-        o => o.status === "Delivered"
-      ).length
-
-
-
-    const totalRevenue =
-      orders.reduce(
-        (sum, o) =>
-          sum + (o.total || 0),
-        0
-      )
-
-
-
-    /* 📅 TODAY ORDERS */
-
-    const today =
-      new Date()
-
-    const todayOrders =
-      orders.filter(o => {
-
-        if (!o.createdAt)
-          return false
-
-        const d =
-          new Date(o.createdAt)
-
-        return (
-          d.toDateString() ===
-          today.toDateString()
-        )
-
-      }).length
+      await Order
+        .find({})
+        .sort({
+          createdAt: -1
+        })
 
 
 
     return NextResponse.json({
 
-      orders,
+      success: true,
 
-      stats: {
-
-        totalOrders,
-        pendingOrders,
-        shippedOrders,
-        deliveredOrders,
-        totalRevenue,
-        todayOrders
-
-      }
+      orders
 
     })
 
@@ -215,12 +219,17 @@ export async function GET() {
     )
 
     return NextResponse.json(
+
       {
+
         success: false,
         message:
           "Failed to fetch orders"
+
       },
+
       { status: 500 }
+
     )
 
   }
@@ -229,7 +238,7 @@ export async function GET() {
 
 
 
-/* 🟢 UPDATE ORDER STATUS */
+/* 🟢 UPDATE STATUS */
 
 export async function PATCH(
   request: Request
@@ -252,27 +261,28 @@ export async function PATCH(
     if (!id || !status) {
 
       return NextResponse.json(
+
         {
+
           success: false,
           message:
             "Missing id or status"
+
         },
+
         { status: 400 }
+
       )
 
     }
 
 
 
-    await Order.findByIdAndUpdate(
-
-      id,
-
-      { status },
-
-      { new: true }
-
-    )
+    await Order
+      .findByIdAndUpdate(
+        id,
+        { status }
+      )
 
 
 
@@ -281,7 +291,7 @@ export async function PATCH(
       success: true,
 
       message:
-        "Status updated successfully"
+        "Status updated"
 
     })
 
@@ -295,12 +305,17 @@ export async function PATCH(
     )
 
     return NextResponse.json(
+
       {
+
         success: false,
         message:
-          "Failed to update status"
+          "Failed to update"
+
       },
+
       { status: 500 }
+
     )
 
   }
@@ -322,29 +337,32 @@ export async function DELETE(
     const body =
       await request.json()
 
-    const { id } =
-      body
+    const { id } = body
 
 
 
     if (!id) {
 
       return NextResponse.json(
+
         {
+
           success: false,
           message:
             "Missing order id"
+
         },
+
         { status: 400 }
+
       )
 
     }
 
 
 
-    await Order.findByIdAndDelete(
-      id
-    )
+    await Order
+      .findByIdAndDelete(id)
 
 
 
@@ -353,7 +371,7 @@ export async function DELETE(
       success: true,
 
       message:
-        "Order deleted successfully"
+        "Order deleted"
 
     })
 
@@ -362,17 +380,22 @@ export async function DELETE(
   catch (error) {
 
     console.log(
-      "Delete Order Error:",
+      "Delete Error:",
       error
     )
 
     return NextResponse.json(
+
       {
+
         success: false,
         message:
-          "Failed to delete order"
+          "Failed to delete"
+
       },
+
       { status: 500 }
+
     )
 
   }

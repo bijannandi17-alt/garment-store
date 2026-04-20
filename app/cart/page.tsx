@@ -19,29 +19,32 @@ export default function CartPage() {
     removeItem
   } = cartContext
 
-  // 🟢 TOTAL
+  /* 🟢 TOTAL */
+
   const total = cart.reduce(
     (sum, item) =>
       sum +
-      item.product.price *
+      (item.product.price || 0) *
       item.quantity,
     0
   )
 
-  // 🟢 SAVINGS
-  const savedAmount =
-    cart.reduce(
-      (sum, item) =>
-        sum +
-        (
-          (item.product.oldPrice || 0)
-          - item.product.price
-        ) *
-        item.quantity,
-      0
-    )
+  /* 🟢 SAVINGS */
 
-  // 🟢 DELIVERY
+  const savedAmount = cart.reduce(
+    (sum, item) =>
+      sum +
+      (
+        (
+          (item.product.mrp || 0) -
+          (item.product.price || 0)
+        )
+      ) * item.quantity,
+    0
+  )
+
+  /* 🟢 DELIVERY */
+
   const deliveryCharge =
     total >= 999 ? 0 : 60
 
@@ -57,10 +60,14 @@ export default function CartPage() {
       </h1>
 
       {cart.length === 0 && (
-        <p>Your cart is empty</p>
+
+        <p className="text-gray-500">
+          Your cart is empty
+        </p>
+
       )}
 
-      {/* 🟢 DELIVERY INFO */}
+      {/* DELIVERY INFO */}
 
       {cart.length > 0 && (
 
@@ -78,96 +85,119 @@ export default function CartPage() {
 
       )}
 
-      {/* 🟢 CART ITEMS */}
+      {/* CART ITEMS */}
 
-      {cart.map(item => (
+      {cart.map(item => {
 
-        <div
-          key={item.product.id}
-          className="flex gap-6 border-b py-5"
-        >
+        const product = item.product
 
-          {/* IMAGE */}
+        /* ✅ FIX IMAGE ERROR */
 
-          <img
-            src={item.product.image[0]}
-            className="w-24 h-24 rounded object-cover"
-          />
+        const imageSrc =
+          product.images?.[0] ||
+          "https://via.placeholder.com/150"
 
-          {/* INFO */}
+        return (
 
-          <div className="flex-1">
+          <div
+            key={`${product._id}-${item.selectedSize}`}
+            className="flex gap-6 border-b py-5"
+          >
 
-            <h2 className="font-bold text-lg">
-              {item.product.name}
-            </h2>
+            {/* IMAGE */}
 
-            {/* SIZE */}
+            <img
+              src={imageSrc}
+              className="w-24 h-24 rounded object-cover"
+              alt={product.name}
+            />
 
-            <p className="text-sm text-gray-500">
-              Size: Free Size
-            </p>
+            {/* INFO */}
 
-            {/* PRICE */}
+            <div className="flex-1">
 
-            <p className="text-pink-600 font-bold mt-1">
-              ₹{item.product.price}
-            </p>
+              <h2 className="font-bold text-lg">
+                {product.name}
+              </h2>
 
-            {item.product.oldPrice && (
+              {/* SIZE */}
 
-              <p className="text-sm line-through text-gray-400">
-                ₹{item.product.oldPrice}
+              <p className="text-sm text-gray-500">
+                Size:
+                {item.selectedSize || "FREE"}
               </p>
 
-            )}
+              {/* PRICE */}
 
-            {/* QUANTITY */}
+              <p className="text-pink-600 font-bold mt-1">
+                ₹{product.price}
+              </p>
 
-            <div className="flex items-center gap-2 mt-3">
+              {product.mrp > 0 && (
+
+                <p className="text-sm line-through text-gray-400">
+                  ₹{product.mrp}
+                </p>
+
+              )}
+
+              {/* QUANTITY */}
+
+              <div className="flex items-center gap-2 mt-3">
+
+                <button
+                  onClick={() =>
+                    decreaseQty(
+                      product._id,
+                      item.selectedSize
+                    )
+                  }
+                  className="px-3 py-1 border rounded"
+                >
+                  −
+                </button>
+
+                <span>
+                  {item.quantity}
+                </span>
+
+                <button
+                  onClick={() =>
+                    increaseQty(
+                      product._id,
+                      item.selectedSize
+                    )
+                  }
+                  className="px-3 py-1 border rounded"
+                >
+                  +
+                </button>
+
+              </div>
+
+              {/* REMOVE */}
 
               <button
                 onClick={() =>
-                  decreaseQty(item.product.id)
+                  removeItem(
+                    product._id,
+                    item.selectedSize
+                  )
                 }
-                className="px-3 py-1 border rounded"
+                className="text-red-500 mt-2 text-sm"
               >
-                −
-              </button>
-
-              <span>
-                {item.quantity}
-              </span>
-
-              <button
-                onClick={() =>
-                  increaseQty(item.product.id)
-                }
-                className="px-3 py-1 border rounded"
-              >
-                +
+                Remove
               </button>
 
             </div>
 
-            {/* REMOVE */}
-
-            <button
-              onClick={() =>
-                removeItem(item.product.id)
-              }
-              className="text-red-500 mt-2 text-sm"
-            >
-              Remove
-            </button>
-
           </div>
 
-        </div>
+        )
 
-      ))}
+      })}
 
-      {/* 🟢 PRICE SUMMARY */}
+      {/* PRICE SUMMARY */}
 
       {cart.length > 0 && (
 
@@ -184,9 +214,7 @@ export default function CartPage() {
           {savedAmount > 0 && (
 
             <p className="text-green-600">
-
               You Saved: ₹{savedAmount}
-
             </p>
 
           )}
@@ -196,34 +224,30 @@ export default function CartPage() {
           </p>
 
           <h2 className="text-xl font-bold mt-2">
-
             Final Total: ₹{finalTotal}
-
           </h2>
 
         </div>
 
       )}
 
-      {/* 🟢 TRUST BADGES */}
+      {/* TRUST BADGES */}
 
       {cart.length > 0 && (
 
         <div className="mt-6 text-sm text-gray-600">
 
-          ✔ Cash on Delivery Available  
-          <br/>
+          ✔ Cash on Delivery Available <br />
 
-          ✔ 7 Days Easy Return  
-          <br/>
+          ✔ 7 Days Easy Return <br />
 
-          ✔ 100% Cotton Quality  
+          ✔ 100% Quality Check
 
         </div>
 
       )}
 
-      {/* 🟢 STICKY CHECKOUT BUTTON */}
+      {/* CHECKOUT */}
 
       {cart.length > 0 && (
 

@@ -1,42 +1,52 @@
 import mongoose from "mongoose"
 
+/* 🟢 Order Item Schema */
+
+const OrderItemSchema =
+  new mongoose.Schema({
+
+    name: {
+      type: String
+    },
+
+    price: {
+      type: Number
+    },
+
+    qty: {
+      type: Number
+    },
+
+    image: {
+      type: String,
+      default: ""
+    }
+
+  })
+
+
+/* 🟢 Main Order Schema */
+
 const OrderSchema =
   new mongoose.Schema(
+
     {
 
       orderId: {
         type: String,
-        required: true,
+        required: true
       },
 
-      name: {
-        type: String,
-      },
+      name: String,
 
-      phone: {
-        type: String,
-      },
+      phone: String,
 
-      address: {
-        type: String,
-      },
+      address: String,
 
-      pincode: {
-        type: String,
-      },
+      pincode: String,
 
       items: [
-
-        {
-
-          name: String,
-
-          price: Number,
-
-          qty: Number,
-
-        }
-
+        OrderItemSchema
       ],
 
       total: Number,
@@ -45,7 +55,7 @@ const OrderSchema =
 
         type: String,
 
-        default: "Pending",
+        default: "Pending"
 
       }
 
@@ -53,11 +63,12 @@ const OrderSchema =
 
     {
 
-      timestamps: true // ⭐ gives createdAt & updatedAt
+      timestamps: true // ⭐ createdAt & updatedAt
 
     }
 
   )
+
 
 export default
   mongoose.models.Order ||

@@ -209,7 +209,11 @@ export default function AdminDashboard() {
           View Orders 📦
 
         </a>
-
+        
+        <a href="/admin/products">
+         Manage Products 📦
+        </a>
+        
       </div>
 
       {/* Summary Cards */}
