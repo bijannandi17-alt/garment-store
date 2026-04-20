@@ -44,9 +44,9 @@ type CartContextType = {
 /* 🟢 CREATE CONTEXT */
 
 export const CartContext =
-  createContext<
-    CartContextType | undefined
-  >(undefined);
+  createContext<CartContextType | undefined>(
+    undefined
+  );
 
 /* 🟢 PROVIDER */
 
@@ -68,9 +68,17 @@ export function CartProvider({
 
     if (savedCart) {
 
-      setCart(
-        JSON.parse(savedCart)
-      );
+      try {
+
+        setCart(
+          JSON.parse(savedCart)
+        );
+
+      } catch {
+
+        setCart([]);
+
+      }
 
     }
 
@@ -90,14 +98,11 @@ export function CartProvider({
   /* 🟢 ADD TO CART */
 
   const addToCart = (
-
     product: Product,
-
     size = "Free Size"
-
   ) => {
 
-    setCart(prev => {
+    setCart((prev: CartItem[]) => {
 
       const existing =
         prev.find(
@@ -138,18 +143,35 @@ export function CartProvider({
 
       }
 
-      /* Ensure images exist */
+      /* Safe Product */
 
       const safeProduct: Product = {
 
-        ...product,
+        _id: product._id,
+
+        name: product.name,
+
+        price: product.price,
+
+        mrp:
+          product.mrp ??
+          product.price,
+
+        category:
+          product.category ??
+          "General",
 
         images:
           product.images?.length > 0
             ? product.images
-            : ["/placeholder.png"]
+            : ["/placeholder.png"],
+
+        stock:
+          product.stock ?? 1
 
       };
+
+      /* Return New Cart */
 
       return [
 
@@ -157,11 +179,21 @@ export function CartProvider({
 
         {
 
-          product: safeProduct,
+          _id: safeProduct._id,
+
+          name: safeProduct.name,
+
+          price: safeProduct.price,
+
+          image: safeProduct.images?.[0] ?? "/placeholder.png",
+
+          size: size,
 
           quantity: 1,
 
-          selectedSize: size
+          selectedSize: size,
+
+          product: safeProduct
 
         }
 
@@ -174,14 +206,11 @@ export function CartProvider({
   /* 🟢 INCREASE */
 
   const increaseQty = (
-
     id: string,
-
     size?: string
-
   ) => {
 
-    setCart(prev =>
+    setCart((prev: CartItem[]) =>
 
       prev.map(item =>
 
@@ -208,14 +237,11 @@ export function CartProvider({
   /* 🟢 DECREASE */
 
   const decreaseQty = (
-
     id: string,
-
     size?: string
-
   ) => {
 
-    setCart(prev =>
+    setCart((prev: CartItem[]) =>
 
       prev
 
@@ -248,14 +274,11 @@ export function CartProvider({
   /* 🟢 REMOVE */
 
   const removeItem = (
-
     id: string,
-
     size?: string
-
   ) => {
 
-    setCart(prev =>
+    setCart((prev: CartItem[]) =>
 
       prev.filter(
 

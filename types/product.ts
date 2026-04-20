@@ -1,42 +1,44 @@
 export interface SizeStock {
-  size: string;
-  stock: number;
+  size: string
+  stock: number
 }
 
 export interface Product {
-  _id: string;
 
-  name: string;
+  _id: string   // MongoDB ID
 
-  price: number;
+  name: string
 
-  mrp: number;
+  price: number
 
-  discount?: number;
+  mrp: number
 
-  category: string;
+  discount?: number
 
-  description?: string;
+  category: string
 
-  material?: string;
+  description?: string
 
-  fit?: string;
+  material?: string
 
-  pattern?: string;
+  fit?: string
 
-  washCare?: string;
+  pattern?: string
 
-  length?: string;
+  washCare?: string
 
-  images: string[];
+  length?: string
 
-  sizeStock?: SizeStock[];
+  images: string[]
 
-  stock: number;
+  sizeStock?: SizeStock[]
 
-  relatedProducts?: string[];
+  stock: number
 
-  createdAt?: string;
+  relatedProducts?: string[]
 
-  updatedAt?: string;
+  createdAt?: string
+
+  updatedAt?: string
+
 }
