@@ -51,221 +51,323 @@ export default function CartPage() {
   const finalTotal =
     total + deliveryCharge
 
-  return (
+  /* 🟢 DELIVERY DATE */
 
-    <div className="p-6 max-w-5xl mx-auto">
+  const deliveryDate = new Date()
 
-      <h1 className="text-3xl font-bold mb-6">
-        Your Cart 🛒
-      </h1>
+  deliveryDate.setDate(
+    deliveryDate.getDate() + 4
+  )
 
-      {cart.length === 0 && (
+  const formattedDate =
+    deliveryDate.toLocaleDateString(
+      "en-IN",
+      {
+        day: "numeric",
+        month: "short"
+      }
+    )
 
-        <p className="text-gray-500">
-          Your cart is empty
+  /* 🟢 EMPTY CART */
+
+  if (cart.length === 0) {
+
+    return (
+
+      <div className="p-10 text-center">
+
+        <h1 className="text-3xl font-bold mb-4">
+          🛒 Your Cart is Empty
+        </h1>
+
+        <p className="text-gray-500 mb-6">
+          Add products to start shopping
         </p>
 
-      )}
+        <Link href="/products">
 
-      {/* DELIVERY INFO */}
+          <button className="bg-green-600 text-white px-6 py-3 rounded">
 
-      {cart.length > 0 && (
+            Continue Shopping
 
-        <div className="border p-4 rounded mb-6 bg-gray-50">
+          </button>
 
-          <p className="font-bold">
-            🚚 Delivery Info
-          </p>
+        </Link>
 
-          <p className="text-sm text-gray-600">
-            Free delivery above ₹999
-          </p>
+      </div>
+
+    )
+
+  }
+
+  return (
+
+    <div className="p-6 max-w-6xl mx-auto">
+
+      <h1 className="text-3xl font-bold mb-6">
+
+        Your Cart 🛒
+
+      </h1>
+
+      {/* GRID LAYOUT */}
+
+      <div className="grid md:grid-cols-3 gap-8">
+
+        {/* LEFT SIDE — ITEMS */}
+
+        <div className="md:col-span-2">
+
+          {/* DELIVERY INFO */}
+
+          <div className="border p-4 rounded mb-6 bg-gray-50">
+
+            <p className="font-bold">
+              🚚 Delivery Info
+            </p>
+
+            <p className="text-sm text-gray-600">
+
+              Delivery by <b>{formattedDate}</b>
+
+            </p>
+
+            <p className="text-sm text-green-600">
+
+              Free delivery above ₹999
+
+            </p>
+
+          </div>
+
+          {/* CART ITEMS */}
+
+          {cart.map(item => {
+
+            const product = item.product
+
+            const imageSrc =
+              product.images?.[0] ||
+              "https://via.placeholder.com/150"
+
+            /* 🟢 DISCOUNT */
+
+            const discount =
+              product.mrp
+                ? Math.round(
+                    (
+                      (
+                        product.mrp -
+                        product.price
+                      ) /
+                      product.mrp
+                    ) * 100
+                  )
+                : 0
+
+            return (
+
+              <div
+                key={`${product._id}-${item.selectedSize}`}
+                className="flex gap-6 border-b py-5"
+              >
+
+                {/* IMAGE */}
+
+                <img
+                  src={imageSrc}
+                  className="w-28 h-28 rounded object-cover"
+                  alt={product.name}
+                />
+
+                {/* INFO */}
+
+                <div className="flex-1">
+
+                  <h2 className="font-bold text-lg">
+
+                    {product.name}
+
+                  </h2>
+
+                  {/* SIZE */}
+
+                  <p className="text-sm text-gray-500">
+
+                    Size:
+                    {item.selectedSize || "FREE"}
+
+                  </p>
+
+                  {/* PRICE */}
+
+                  <div className="flex items-center gap-3 mt-2">
+
+                    <p className="text-pink-600 font-bold text-lg">
+
+                      ₹{product.price}
+
+                    </p>
+
+                    {product.mrp > 0 && (
+
+                      <p className="text-sm line-through text-gray-400">
+
+                        ₹{product.mrp}
+
+                      </p>
+
+                    )}
+
+                    {discount > 0 && (
+
+                      <span className="text-green-600 text-sm font-bold">
+
+                        {discount}% OFF
+
+                      </span>
+
+                    )}
+
+                  </div>
+
+                  {/* QUANTITY */}
+
+                  <div className="flex items-center gap-2 mt-3">
+
+                    <button
+                      onClick={() =>
+                        decreaseQty(
+                          product._id,
+                          item.selectedSize
+                        )
+                      }
+                      className="px-3 py-1 border rounded"
+                    >
+                      −
+                    </button>
+
+                    <span>
+                      {item.quantity}
+                    </span>
+
+                    <button
+                      onClick={() =>
+                        increaseQty(
+                          product._id,
+                          item.selectedSize
+                        )
+                      }
+                      className="px-3 py-1 border rounded"
+                    >
+                      +
+                    </button>
+
+                  </div>
+
+                  {/* REMOVE */}
+
+                  <button
+                    onClick={() =>
+                      removeItem(
+                        product._id,
+                        item.selectedSize
+                      )
+                    }
+                    className="text-red-500 mt-2 text-sm"
+                  >
+
+                    🗑 Remove
+
+                  </button>
+
+                </div>
+
+              </div>
+
+            )
+
+          })}
 
         </div>
 
-      )}
+        {/* RIGHT SIDE — PRICE BOX */}
 
-      {/* CART ITEMS */}
+        <div className="sticky top-24 h-fit">
 
-      {cart.map(item => {
+          <div className="border p-6 rounded bg-gray-50">
 
-        const product = item.product
+            <h2 className="text-xl font-bold mb-4">
 
-        /* ✅ FIX IMAGE ERROR */
+              Price Details
 
-        const imageSrc =
-          product.images?.[0] ||
-          "https://via.placeholder.com/150"
+            </h2>
 
-        return (
+            <div className="space-y-2 text-sm">
 
-          <div
-            key={`${product._id}-${item.selectedSize}`}
-            className="flex gap-6 border-b py-5"
-          >
+              <p>
 
-            {/* IMAGE */}
+                Subtotal: ₹{total}
 
-            <img
-              src={imageSrc}
-              className="w-24 h-24 rounded object-cover"
-              alt={product.name}
-            />
-
-            {/* INFO */}
-
-            <div className="flex-1">
-
-              <h2 className="font-bold text-lg">
-                {product.name}
-              </h2>
-
-              {/* SIZE */}
-
-              <p className="text-sm text-gray-500">
-                Size:
-                {item.selectedSize || "FREE"}
               </p>
 
-              {/* PRICE */}
+              {savedAmount > 0 && (
 
-              <p className="text-pink-600 font-bold mt-1">
-                ₹{product.price}
-              </p>
+                <p className="text-green-600 font-bold">
 
-              {product.mrp > 0 && (
+                  You Saved: ₹{savedAmount}
 
-                <p className="text-sm line-through text-gray-400">
-                  ₹{product.mrp}
                 </p>
 
               )}
 
-              {/* QUANTITY */}
+              <p>
 
-              <div className="flex items-center gap-2 mt-3">
+                Delivery: ₹{deliveryCharge}
 
-                <button
-                  onClick={() =>
-                    decreaseQty(
-                      product._id,
-                      item.selectedSize
-                    )
-                  }
-                  className="px-3 py-1 border rounded"
-                >
-                  −
-                </button>
+              </p>
 
-                <span>
-                  {item.quantity}
-                </span>
+              <hr />
 
-                <button
-                  onClick={() =>
-                    increaseQty(
-                      product._id,
-                      item.selectedSize
-                    )
-                  }
-                  className="px-3 py-1 border rounded"
-                >
-                  +
-                </button>
+              <h2 className="text-lg font-bold">
 
-              </div>
+                Final Total: ₹{finalTotal}
 
-              {/* REMOVE */}
-
-              <button
-                onClick={() =>
-                  removeItem(
-                    product._id,
-                    item.selectedSize
-                  )
-                }
-                className="text-red-500 mt-2 text-sm"
-              >
-                Remove
-              </button>
+              </h2>
 
             </div>
 
+            {/* TRUST BADGES */}
+
+            <div className="mt-6 text-sm text-gray-600 space-y-1">
+
+              <p>✔ Cash on Delivery Available</p>
+
+              <p>✔ 7 Days Easy Return</p>
+
+              <p>✔ 100% Quality Check</p>
+
+              <p>🔒 Secure Payments</p>
+
+            </div>
+
+            {/* CHECKOUT */}
+
+            <Link href="/checkout">
+
+              <button className="mt-6 w-full bg-green-600 text-white py-3 rounded hover:bg-green-700">
+
+                Proceed to Checkout 🚀
+
+              </button>
+
+            </Link>
+
           </div>
 
-        )
-
-      })}
-
-      {/* PRICE SUMMARY */}
-
-      {cart.length > 0 && (
-
-        <div className="mt-8 border p-6 rounded bg-gray-50">
-
-          <h2 className="text-xl font-bold mb-4">
-            Price Details
-          </h2>
-
-          <p>
-            Subtotal: ₹{total}
-          </p>
-
-          {savedAmount > 0 && (
-
-            <p className="text-green-600">
-              You Saved: ₹{savedAmount}
-            </p>
-
-          )}
-
-          <p>
-            Delivery: ₹{deliveryCharge}
-          </p>
-
-          <h2 className="text-xl font-bold mt-2">
-            Final Total: ₹{finalTotal}
-          </h2>
-
         </div>
 
-      )}
-
-      {/* TRUST BADGES */}
-
-      {cart.length > 0 && (
-
-        <div className="mt-6 text-sm text-gray-600">
-
-          ✔ Cash on Delivery Available <br />
-
-          ✔ 7 Days Easy Return <br />
-
-          ✔ 100% Quality Check
-
-        </div>
-
-      )}
-
-      {/* CHECKOUT */}
-
-      {cart.length > 0 && (
-
-        <div className="sticky bottom-0 bg-white p-4 mt-6 border-t">
-
-          <Link href="/checkout">
-
-            <button className="w-full bg-green-600 text-white py-3 rounded hover:bg-green-700">
-
-              Proceed to Checkout
-
-            </button>
-
-          </Link>
-
-        </div>
-
-      )}
+      </div>
 
     </div>
 

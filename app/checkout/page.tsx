@@ -4,6 +4,12 @@ import { supportedPincodes } from "@/data/pincodes"
 import { useContext, useState } from "react"
 import { CartContext } from "../../lib/cartContext"
 
+declare global {
+  interface Window {
+    Razorpay: any
+  }
+}
+
 export default function CheckoutPage() {
 
   const cartContext = useContext(CartContext)
@@ -14,14 +20,14 @@ export default function CheckoutPage() {
 
   const { cart, clearCart } = cartContext
 
-  /* 🟢 CUSTOMER DETAILS */
+  /* 🟢 CUSTOMER */
 
   const [name, setName] = useState("")
   const [phone, setPhone] = useState("")
   const [address, setAddress] = useState("")
   const [pincode, setPincode] = useState("")
 
-  /* 🟢 PAYMENT METHOD */
+  /* 🟢 PAYMENT */
 
   const [paymentMethod, setPaymentMethod] =
     useState("whatsapp")
@@ -41,6 +47,48 @@ export default function CheckoutPage() {
 
   const finalTotal =
     total + deliveryCharge
+
+  /* 🟢 VALIDATION */
+
+  const validateForm = () => {
+
+    if (
+      !name ||
+      !phone ||
+      !address ||
+      !pincode
+    ) {
+
+      alert("Please fill all details")
+      return false
+
+    }
+
+    if (phone.length !== 10) {
+
+      alert("Enter valid 10-digit phone")
+      return false
+
+    }
+
+    if (
+      !supportedPincodes.includes(pincode)
+    ) {
+
+      alert("Delivery not available to this pincode")
+      return false
+
+    }
+
+    if (cart.length === 0) {
+
+      alert("Cart is empty")
+      return false
+
+    }
+
+    return true
+  }
 
   /* 🟢 SAVE ORDER */
 
@@ -80,20 +128,7 @@ export default function CheckoutPage() {
   const createOrder =
     async () => {
 
-      if (
-        !name ||
-        !phone ||
-        !address ||
-        !pincode
-      ) {
-
-        alert(
-          "Please fill all details"
-        )
-
-        return null
-
-      }
+      if (!validateForm()) return null
 
       const orderId =
         "ORD" + Date.now()
@@ -109,7 +144,10 @@ export default function CheckoutPage() {
           pincode
         },
 
-        items: cart,
+        /* ⭐ FIXED */
+        items: JSON.parse(
+          JSON.stringify(cart)
+        ),
 
         total: finalTotal,
 
@@ -123,7 +161,7 @@ export default function CheckoutPage() {
 
       await saveOrderToDB(orderData)
 
-      /* Save Local */
+      /* Local Backup */
 
       const existingOrders =
         JSON.parse(
@@ -138,13 +176,11 @@ export default function CheckoutPage() {
         JSON.stringify(existingOrders)
       )
 
-      clearCart()
-
       return orderId
 
     }
 
-  /* 🟢 WHATSAPP ORDER */
+  /* 🟢 WHATSAPP */
 
   const handleWhatsAppOrder =
     async () => {
@@ -158,16 +194,18 @@ export default function CheckoutPage() {
         "918951270795"
 
       const url =
-        `https://wa.me/${whatsappNumber}?text=New Order ID: ${orderId}`
+`https://wa.me/${whatsappNumber}?text=New Order ID: ${orderId}`
 
       window.open(url, "_blank")
+
+      clearCart()
 
       window.location.href =
         `/order-success?orderId=${orderId}`
 
     }
 
-  /* 🟢 COD ORDER */
+  /* 🟢 COD */
 
   const handleCODOrder =
     async () => {
@@ -177,12 +215,14 @@ export default function CheckoutPage() {
 
       if (!orderId) return
 
+      clearCart()
+
       window.location.href =
         `/order-success?orderId=${orderId}`
 
     }
 
-  /* 🟢 UPI PAYMENT */
+  /* 🟢 UPI */
 
   const handleUPIOrder =
     async () => {
@@ -193,12 +233,16 @@ export default function CheckoutPage() {
       if (!orderId) return
 
       const upiId =
-        "yourupi@okaxis"   // change this
+        "yourupi@okaxis" // CHANGE
 
       const url =
 `upi://pay?pa=${upiId}&pn=Amropali Fashion&am=${finalTotal}&cu=INR`
 
-      window.location.href = url
+      /* ⭐ FIXED */
+
+      window.open(url, "_blank")
+
+      clearCart()
 
       setTimeout(() => {
 
@@ -209,34 +253,80 @@ export default function CheckoutPage() {
 
     }
 
-  /* 🟢 MAIN PLACE ORDER */
+  /* 🟢 RAZORPAY */
+
+  const handleRazorpayPayment =
+    async () => {
+
+      const orderId =
+        await createOrder()
+
+      if (!orderId) return
+
+      const options = {
+
+        key:
+          "YOUR_RAZORPAY_KEY", // replace
+
+        amount:
+          finalTotal * 100,
+
+        currency:
+          "INR",
+
+        name:
+          "Amropali Fashion",
+
+        description:
+          "Order Payment",
+
+        handler: function () {
+
+          clearCart()
+
+          window.location.href =
+            `/order-success?orderId=${orderId}`
+
+        },
+
+        prefill: {
+
+          name,
+          contact: phone
+
+        },
+
+        theme: {
+
+          color: "#16a34a"
+
+        }
+
+      }
+
+      const rzp =
+        new window.Razorpay(options)
+
+      rzp.open()
+
+    }
+
+  /* 🟢 MAIN */
 
   const handlePlaceOrder =
     () => {
 
-      if (
-        paymentMethod === "whatsapp"
-      ) {
-
+      if (paymentMethod === "whatsapp")
         handleWhatsAppOrder()
 
-      }
-
-      else if (
-        paymentMethod === "cod"
-      ) {
-
+      else if (paymentMethod === "cod")
         handleCODOrder()
 
-      }
-
-      else if (
-        paymentMethod === "upi"
-      ) {
-
+      else if (paymentMethod === "upi")
         handleUPIOrder()
 
-      }
+      else if (paymentMethod === "card")
+        handleRazorpayPayment()
 
     }
 
@@ -293,7 +383,7 @@ export default function CheckoutPage() {
 
       </div>
 
-      {/* PAYMENT METHOD */}
+      {/* PAYMENT */}
 
       <div className="mt-8 border p-4 rounded">
 
@@ -301,56 +391,31 @@ export default function CheckoutPage() {
           Select Payment Method 💳
         </h3>
 
-        <label className="block mb-2">
+        {[
+          ["whatsapp","WhatsApp Order 📱"],
+          ["cod","Cash on Delivery 💰"],
+          ["upi","UPI Payment 📲"],
+          ["card","Card / NetBanking 💳"]
+        ].map(([value,label]) => (
 
-          <input
-            type="radio"
-            value="whatsapp"
-            checked={
-              paymentMethod === "whatsapp"
-            }
-            onChange={() =>
-              setPaymentMethod("whatsapp")
-            }
-          />
+          <label key={value} className="block mb-2">
 
-          {" "}WhatsApp Order 📱
+            <input
+              type="radio"
+              value={value}
+              checked={
+                paymentMethod === value
+              }
+              onChange={() =>
+                setPaymentMethod(value)
+              }
+            />
 
-        </label>
+            {" "}{label}
 
-        <label className="block mb-2">
+          </label>
 
-          <input
-            type="radio"
-            value="cod"
-            checked={
-              paymentMethod === "cod"
-            }
-            onChange={() =>
-              setPaymentMethod("cod")
-            }
-          />
-
-          {" "}Cash on Delivery 💰
-
-        </label>
-
-        <label className="block">
-
-          <input
-            type="radio"
-            value="upi"
-            checked={
-              paymentMethod === "upi"
-            }
-            onChange={() =>
-              setPaymentMethod("upi")
-            }
-          />
-
-          {" "}UPI Payment 📲
-
-        </label>
+        ))}
 
       </div>
 
