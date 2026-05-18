@@ -19,7 +19,7 @@ interface Props {
   items: Item[];
 }
 
-function numberToWords(num: number) {
+function numberToWords(num: number): string {
 
   const ones = [
     "", "One", "Two", "Three",
